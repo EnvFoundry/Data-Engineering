@@ -40,6 +40,6 @@ The interfaces carry different objects. A corpus release identifies content; a m
 
 ## Current development focus
 
-The v0.2 work connects source releases to budgeted shard composition and resumable consumers, and task data to grouped batched interaction. SQL database task packs exercise the data-defined environment path; scientific reference tasks continue to exercise active measurement and design. Model-specific tokenization, large corpus curation, multimodal decoding and remote workers attach to these interfaces as workload-specific implementations.
+Version 0.3 connects source releases, budgeted composition, explicit causal targets and loss masks, and resumable Python/Rust consumption. TypeScript and MCP expose the same preparation operations. The authored packing example establishes target alignment and reader continuation; consumer experiments determine downstream learning value. Model-specific tokenization, large corpus curation, multimodal decoding and remote workers attach through workload-specific adapters.
 
 Useful integrations next include an actual training framework, a larger externally sourced task set and a mature columnar/curation backend. Select them by the experiment and measured bottleneck. Their presence should change what can be trained, learned or measured.

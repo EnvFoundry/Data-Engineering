@@ -17,13 +17,15 @@ The object of study is a data policy: how sources are acquired, transformed, sel
 
 Each question can use a small working experiment before requiring large infrastructure. Full-scale training, multimodal decoding and online acquisition enter through consumer and source adapters appropriate to that experiment.
 
-## Studies enabled by v0.2
+## Studies enabled by the current implementation
 
 **Mixture and delivery.** Build two or more source releases, pin them in a recipe and vary weights under a record or supplied-token budget. Use `MixtureReader` to keep sample assignment and restart behavior explicit. First measure source exposure, bytes, throughput and memory with [the composition script](../examples/measure_composition.py); then connect the same products to a fixed trainer and measure learning. Source draw weights apply to records, so differences in record length must be measured when interpreting token exposure.
 
 **Task data to grouped experience.** Prepare a versioned SQL task pack or generated scientific task suite. Hold the environment and task distribution fixed, collect several policy attempts per task and compare how candidate count or selection changes useful experience per model call. Keep task groups intact across ranks. The runnable starting points are Gym's [SQL workload](https://github.com/Cherish0925/Verifiable-Agent-Gym/tree/main/examples/sql-workload) and [batched rollout example](https://github.com/Cherish0925/Verifiable-Agent-Gym/blob/main/examples/batched_rollouts.py).
 
 **Feedback to the next data product.** Import rollout exports through `gym-jsonl`, retain policy/task identities and compare selection or replay recipes. Measure downstream effect with a fixed consumer or the necessary crossed data/consumer comparisons. Scored failures, truncations and environment errors lead to different data decisions; preserve their observed status when constructing the next product.
+
+**Encoding and objective equivalence.** Use packed token positions, target masks and segment boundaries to compare sequence layouts while preserving the intended prediction pairs. The [packing example](packing.md) computes the same masked objective before and after packing. Then measure actual learner throughput and held-out behavior.
 
 These paths supply the data and execution operations. Their next research result is a measured consumer effect, such as a changed learning curve or transfer result.
 

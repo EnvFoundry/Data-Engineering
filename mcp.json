@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "data-engineering": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "--no-project", "--script", "server.py", "serve", "--root", "."],
+      "cwd": "./"
+    }
+  }
+}

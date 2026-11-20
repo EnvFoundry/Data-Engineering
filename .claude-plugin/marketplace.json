@@ -1,0 +1,5 @@
+{
+  "name": "data-engineering",
+  "owner": {"name": "EnvFoundry contributors"},
+  "plugins": [{"name": "data-engineering", "source": "./", "description": "Data preparation and consumption for AI research."}]
+}

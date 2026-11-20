@@ -20,7 +20,7 @@ Data Engineering 是独立、通用的 AI 数据研究与工程环境：将现�
 
 任务、演示、偏好、标签、奖励、轨迹、特征、向量、测量和记忆都属于有各自语义的记录或数据产品。避免为每个研究方向另建一套来源、版本和存储体系。领域专用结构仍由对应领域定义。
 
-v0.2 已实现本地数据发布、按预算混合、索引分片与 rank 读取恢复。记录与发布字段见 [contracts.md](contracts.md)，消费语义见 [consumption.md](consumption.md)，公开工作负载依据见 [frontier-workloads.md](frontier-workloads.md)。
+v0.3 已实现本地数据发布、按预算混合、因果序列打包、索引分片与 Python/Rust rank 读取恢复，并提供 TypeScript 与 MCP 接入。记录与发布字段见 [contracts.md](contracts.md)，消费语义见 [consumption.md](consumption.md)，公开工作负载依据见 [frontier-workloads.md](frontier-workloads.md)。
 
 ## 完整工作范围
 
@@ -132,7 +132,7 @@ flowchart TD
 
 从可以运行的通用核心开始，同时保留整个领域的设计视野：
 
-1. **当前 v0.2**：记录/配方/发布契约，固定来源的预算混合、索引分片、rank 读取恢复，以及与 Gym 任务包、分组 rollout 和轨迹回流的衔接；Python/CLI/MCP 共用实现。
+1. **当前 v0.3**：记录/配方/发布契约，预算混合、保留预测目标的序列打包、索引分片与 Python/Rust 游标恢复；Python/CLI/MCP 共用实现，TypeScript 接入 Harness，任务轨迹通过可选连接器复用。
 2. **实际学习与使用**：接入真实语料、任务集和训练器，把 reader 状态、模型检查点与损失构造衔接；开展混合或候选筛选实验，并交付检索产品。
 3. **规模与模态**：接入成熟批处理/列式存储与多模态解码；测量数据量、吞吐、内存、I/O 和成本，再决定部署。
 4. **持续数据服务**：增量、来源撤回、流数据、时间一致特征、共享目录与异步运行。

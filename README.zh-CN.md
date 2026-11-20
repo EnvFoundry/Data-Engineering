@@ -1,106 +1,73 @@
 # Data Engineering
 
-**面向 AI 的数据系统与研究方法：从原始来源到学习、检索、评测和使用反馈。**
+**准备数据、构建学习分布，把含义明确的模型输入交给训练与研究。**
 
-[English](README.md) · [总体设计](docs/design.zh-CN.md) · [数据消费](docs/consumption.md) · [研究方向](docs/research.md) · [实现状态](docs/roadmap.md)
+[English](README.md) · [数据消费](docs/consumption.md) · [序列打包](docs/packing.md) · [研究方法](docs/research.md) · [接口与安装](docs/integrations.md)
 
-核心问题是：在计算预算下，什么数据能提升系统能力，怎样构造并持续交付这些数据？本项目连接来源快照、领域结构、处理配方、混合分布与消费反馈，覆盖预训练、后训练、多模态模型、Agent、检索与记忆、传统机器学习、机器人和科学实验。
+Data Engineering 是覆盖 AI 数据生命周期的独立研究环境，服务于预训练、后训练、检索、Agent、多模态系统与科学研究。数据保留领域结构，来源整理、分布选择和模型输入转换各有明确职责。数据方案的价值最终体现为：在确定的预算下，它如何改变使用这些数据的系统。
 
-核心独立于模型厂商、训练框架与云平台。Qiushi Engine、RSI 和其他 AI 系统都可以成为消费者。[OpenAI、Google DeepMind、Anthropic 与 DeepSeek 的公开工作](docs/frontier-workloads.md)提供工作负载依据，并指向后续需要解决的具体问题。
+## 运行从数据到训练输入的工作流
 
-## 可运行的数据路径
-
-v0.2 提供两类互补操作：**build** 将来源整理为带切分和来源关系的数据版本；**compose** 从固定版本中按预算构造消费序列，再由可恢复的 reader 交付。
-
-| 操作 | 已实现能力 |
-| --- | --- |
-| 构建数据版本 | 规范 JSONL 与 Gym 导入、精确去重、父子与分组关系、确定性切分、用途选择、逐条处理记录。 |
-| 构造消费分布 | 带权来源选择、确定性顺序、记录数或已有 token 计数预算、来源耗尽策略、带位置索引的 JSONL 分片。 |
-| 交付数据 | 按 rank/world_size 分配样本、可选等长分配、索引读取、绑定数据版本和 rank 配置的恢复状态。 |
-| 回收运行经验 | 将 Verifiable Agent Gym 的观察、动作、任务切分、验证结果及 rollout 元数据导入为轨迹记录。 |
-| Agent 操作 | Python、CLI、MCP 共用核心，提供 connector 扩展入口和操作 Skill。 |
-
-需要 Python 3.11 及以上，核心仅依赖标准库。
+需要 Python 3.11 或更新版本。Python 核心仅使用标准库。
 
 ```sh
-git clone https://github.com/Cherish0925/Data-Engineering.git
+git clone https://github.com/EnvFoundry/Data-Engineering.git
 cd Data-Engineering
 python -m pip install -e .
-python examples/compose_training.py --output runs/training-example
-ai-data verify-mixture runs/training-example/mixture
+python examples/pack_training.py --output runs/packed-training
 ```
 
-示例创建文本和代码两个来源版本，以 3:1 的来源权重抽取 1,000 条记录，生成分片，并演示四个 reader rank 中一个的断点恢复。修改生成的配方后，可构建新版本：
+独立示例从人工编写的 token 记录开始，构建数据版本、采样分布和因果预测序列，再演示按训练进程分配数据及恢复读取位置。它解释真实的数据处理与目标对齐，不包含模型训练结果。
 
-```sh
-ai-data compose runs/training-example/mixture.recipe.json --output runs/mixture-v2
-ai-data verify-mixture runs/mixture-v2
-```
-
-`python -m ai_data` 等价于 `ai-data`；没有 `python` 命令时可用 `python3` 或 `py -3.11`。
-
-## 来源整理与数据消费
+| 操作 | 提供的能力 |
+| --- | --- |
+| 准备 | 来源版本、分区、样本组关系、重复数据处理与转换记录。 |
+| 组合 | 来源权重、记录或已有 token 数预算、索引分片，以及实际组成统计。 |
+| 打包 | 固定长度的因果预测对、目标损失掩码、文档片段、位置与来源。 |
+| 读取 | Python 与可选 Rust 读取器，按 rank 分配数据并恢复游标。 |
+| 查看 | 有界的记录分页，以及 CLI/MCP 中按主题读取的研究指导。 |
 
 ```sh
 ai-data profile examples/records.jsonl
-ai-data build examples/local.recipe.json --output runs/source-v1
-ai-data verify runs/source-v1
-ai-data inspect runs/source-v1
+ai-data build examples/local.recipe.json --output runs/source
+python examples/compose_training.py --output runs/mixture-example
+ai-data samples runs/mixture-example/mixture --limit 3
 ```
 
-数据版本包含分区文件、来源关系、处理决定和由内容计算的发布清单。构建器先建立关联再过滤和去重，使已知副本与派生记录保留其切分关系。领域载荷保留自身结构：偏好对、传感器序列和表格各自有合适的表达方式。具体格式见[数据契约](docs/contracts.md)。
+`python -m ai_data` 与 `ai-data` 等价。[数据契约](docs/contracts.md)允许保留偏好对、交互轨迹、图像与音频引用、传感器序列和表格。领域解码与模型专用分词由相应的数据处理步骤完成。
+
+## 保持训练目标的含义
+
+打包使用指定 tokenizer 已经产生的 token ID，并记录名称和版本。`input_ids[i]` 对应的预测目标是 `target_ids[i]`，损失掩码决定哪些目标参与优化。目标已经与 logits 对齐；对于内部自动移动标签的模型，使用[序列打包说明](docs/packing.md)中的显式适配方式。
+
+片段信息保留文档边界，支持各文档独立的因果注意力。长记录切块时保留所有文档内相邻预测对；填充、目标掩码和 rank 尾部处理均有明确含义。读取游标应与模型和优化器状态一起保存。
 
 ```python
 from ai_data import MixtureReader
 
-with MixtureReader("runs/training-example/mixture", rank=1, world_size=4) as reader:
-    sample = next(reader)
-    record = sample["record"]
-    checkpoint = reader.state_dict()
-
-with MixtureReader("runs/training-example/mixture", rank=1, world_size=4) as reader:
-    reader.load_state_dict(checkpoint)
-    next_sample = next(reader)
+with MixtureReader("runs/mixture-example/mixture", rank=1, world_size=4) as reader:
+    record = next(reader)["record"]
+    cursor = reader.state_dict()
 ```
 
-混合配方明确选择每个来源的分区。token 预算读取记录中指定字段的已有计数；分词器、编码方式和损失掩码由消费者定义。[消费说明](docs/consumption.md)给出配方、耗尽策略、rank 分配与恢复语义；[测量脚本](examples/measure_composition.py)分别测量来源准备、混合构建和读取。
+[数据消费](docs/consumption.md)解释来源耗尽、加权与 rank 分配；[原生读取](docs/native-reader.md)解释可选 Rust 程序及兼容的游标格式。完整工作流也可以仅使用 Python。
 
-## 任务数据与反馈
-
-[Verifiable Agent Gym](https://github.com/Cherish0925/Verifiable-Agent-Gym)将任务记录变成可执行环境，记录外部策略的尝试。它的 SQL task pack 可直接读取本项目的数据版本；分组 rollout 导出通过 `gym-jsonl` 返回任务、策略、尝试、观察/动作与结果信息。
+## 接入 Harness 与 Agent
 
 ```sh
-ai-data build examples/gym.recipe.json --output runs/gym-trajectories
-ai-data verify runs/gym-trajectories
+python -m pip install -e '.[mcp]'
+ai-data capabilities
+ai-data connect --root /absolute/path/to/data-workspace --output data-engineering.local.json
 ```
 
-接入实际运行时，将配方指向 `agent-gym export` 或 `agent-gym export-rollouts` 文件并记录来源版本。Gym 负责环境交互和结果评价，Data Engineering 负责数据分布与产品，外部训练器负责模型推理和优化。数据策略、环境反馈与学习效果分别记录，并通过版本身份关联。
+Python、CLI 和 MCP 共用实现。Agent 先获取统计与少量样本，再按需读取 payload 或 token。安装后的方法资源与提示词覆盖分布设计、训练打包和结果解释；仓库提供相应 Skill 与插件配置。[接口指南](docs/integrations.md)说明安装与扩展方式。
 
-安装两个相邻目录中的仓库后，可直接运行完整的任务到经验流程：
-
-```sh
-python examples/experience_cycle.py --gym-tasks ../Verifiable-Agent-Gym/examples/sql-workload/tasks.jsonl --output runs/experience-cycle
-```
-
-示例构建 SQL 任务版本，采集八次分组尝试并产生成功与失败结果，再导入轨迹、构建三个分片，检查两个 reader rank 的分配和精确恢复。
+[TypeScript SDK](sdk/typescript/README.md)通过类型化方法启动已安装的 Python 包，支持取消、进程错误和有界响应。[Rust 读取器](docs/native-reader.md)则沿字节索引直接输出记录，供需要原生进程的消费者使用。
 
 ## 研究与扩展
 
-研究围绕能改变能力的数据决策展开：来源配比、合成候选筛选、任务难度、经验复用、多模态对齐与反馈更新。每个实验把明确的数据干预与消费者表现、资源预算联系起来，详见[研究方法](docs/research.md)和[公开工作负载依据](docs/frontier-workloads.md)。
+来源配比、合成数据选择、任务难度、经验复用、多模态对齐和反馈更新，都应连接到具体的训练或使用结果。分别记录数据组成、系统吞吐与学习效果。[研究方法](docs/research.md)和[公开前沿工作](docs/frontier-workloads.md)给出可推进的方向。
 
-```sh
-python -m pip install -e ".[mcp]"
-ai-data connect --root . --output data-engineering.local.json
-```
+连接器通过 `ai_data.connectors` 扩展；内置规范 JSONL 与 Gym 轨迹导入。可选的任务与经验工作流见[接口指南](docs/integrations.md)，默认运行不依赖其他 EnvFoundry 仓库。
 
-将配置导入兼容的 MCP host，即可调用数据分析、构建、检查、混合和验证工具。[操作 Skill](skills/data-engineering/SKILL.md)与[接入说明](docs/integrations.md)提供 Agent 和 connector 的使用方法。
-
-当前实现运行在本机：来源构建器在内存中处理记录，混合构建和读取使用磁盘索引与分片。近重复处理、模型专用分词/打包、多模态解码、远程 worker 和训练器适配是下一步工作。示例使用人工编写的记录和脚本策略展示数据流；实际学习收益需要接入消费者实验，具体安排见[开发路线](docs/roadmap.md)。
-
-```sh
-python -m pip install -e ".[mcp,test]"
-python -m unittest discover -s tests -v
-python -m pip wheel . --no-deps --wheel-dir dist
-```
-
-实现位于 `src/ai_data/`，可执行配方位于 `examples/`，研究方法位于 `docs/`。参与开发前请阅读 [AGENTS.md](AGENTS.md)。
+目前来源准备仍将记录保留在内存；组合、打包与读取使用磁盘分片。[实现状态](docs/roadmap.md)区分已经可用的操作与后续扩展。代码位于 `src/ai_data/`、`rust/` 与 `sdk/typescript/`，可执行流程位于 `examples/`。贡献前阅读 [AGENTS.md](AGENTS.md)。MIT 许可证。

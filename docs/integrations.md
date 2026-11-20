@@ -1,20 +1,36 @@
 # Integrations
 
-All front ends share `ai_data.pipeline` and `ai_data.composition`. Source adapters produce records; consumer adapters turn released records into the inputs their workload needs.
+All front ends share `ai_data.pipeline`, `ai_data.composition` and `ai_data.packing`. Source adapters produce records; consumer adapters turn released records into the inputs their workload needs.
 
 ## Implemented interfaces
 
 | Interface | Current support |
 | --- | --- |
-| Python | `build`, `profile`, `inspect_release`, `verify_release`, `compose`, `verify_mixture`, `MixtureReader`. |
-| CLI | `build`, `profile`, `inspect`, `verify`, `compose`, `verify-mixture`, `schema`, `connect`, `serve`; JSON stdout, errors on stderr with exit code 2. |
-| MCP | Seven stdio tools over the same data operations, using the official Python SDK v1 and a configured filesystem workspace. |
+| Python | `build`, `profile`, `inspect_release`, `verify_release`, `compose`, `verify_mixture`, `MixtureReader`, `pack`, `PackedReader`, `samples_page`. |
+| CLI | `capabilities`, `build`, `profile`, `inspect`, `compose`, `pack`, `samples`, `packed`, `guide`, plus release inspection and connection operations; JSON stdout, errors on stderr with exit code 2. |
+| MCP | Shared preparation, composition, packing and bounded record pages; installed topic resources and research prompts, using the official Python SDK v1. |
+| TypeScript | Typed Node clients over the installed CLI; see [SDK](../sdk/typescript/README.md). |
+| Rust | Optional native indexed reader with Python-compatible rank state; see [native reading](native-reader.md). |
 | Skill | `skills/data-engineering/SKILL.md`, repository-scoped operating guidance for compatible agent hosts. |
 | Connector plugin | Installed Python entry points under `ai_data.connectors`, enabled by SDK/CLI. |
 | Canonical JSONL | Native reader for record schema `1.0`. |
 | Verifiable Agent Gym | Task release input to Gym; episode/rollout export-v1 input from Gym. Original splits, policy/group identities and supplied model statistics survive the handoff. |
 
 See [training consumption](consumption.md) for mixture recipes, rank assignment and reader checkpoints. MCP controls preparation and returns metadata; trainers consume shard files directly.
+
+## Install a harness or plugin
+
+```sh
+python -m pip install -e '.[mcp]'
+ai-data capabilities
+ai-data connect --root /absolute/path/to/workspace --output data-engineering.local.json
+```
+
+Use the generated command and arguments in an MCP host. The installed interpreter and workspace are explicit, so the host can launch from another directory. `data_samples` returns metadata and small pages; request payload previews or packed tokens only when the current task needs them. Guides live under `data://guides/`; the capability response lists current topics and prompts.
+
+The source package includes Claude Code, Codex and portable plugin manifests. Source launchers use `uv` and `server.py`; `uv` resolves the declared MCP runtime on first launch. Plugin configurations default to their process working directory. Prefer generated configuration when working in a separate data workspace. Native-host installation and marketplace listing are separate from MCP protocol support.
+
+Build the Python wheel/source archive with `python -m build`; `python scripts/package_plugin.py` builds a relocatable plugin archive. The TypeScript SDK builds separately with `npm ci` and `npm run build` in `sdk/typescript`. The optional Rust executable builds from `rust/Cargo.toml`; neither optional toolchain is needed to install the Python core.
 
 ## Gym handoff
 

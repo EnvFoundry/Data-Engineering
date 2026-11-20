@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "data-engineering",
+  "version": "0.3.0",
+  "description": "Prepare source releases, compose training distributions and pack model inputs.",
+  "author": {"name": "EnvFoundry contributors"},
+  "homepage": "https://github.com/EnvFoundry/Data-Engineering",
+  "repository": "https://github.com/EnvFoundry/Data-Engineering",
+  "license": "MIT",
+  "keywords": ["data", "training", "research", "mcp"]
+}

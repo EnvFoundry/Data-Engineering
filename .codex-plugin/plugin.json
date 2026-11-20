@@ -1,0 +1,17 @@
+{
+  "name": "data-engineering",
+  "version": "0.3.0",
+  "description": "Prepare, compose and consume AI data through one shared core.",
+  "author": {"name": "EnvFoundry contributors"},
+  "homepage": "https://github.com/EnvFoundry/Data-Engineering",
+  "repository": "https://github.com/EnvFoundry/Data-Engineering",
+  "license": "MIT",
+  "skills": "./skills/",
+  "mcpServers": "./mcp.codex.json",
+  "requires_local_executor": true,
+  "interface": {
+    "displayName": "Data Engineering",
+    "shortDescription": "Prepare data releases and model training streams",
+    "developerName": "EnvFoundry"
+  }
+}

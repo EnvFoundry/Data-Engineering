@@ -1,11 +1,12 @@
-name: Data contracts and interfaces
-on: [push, pull_request]
-
+name: Data environment
+on:
+  push:
+    branches: [main]
+  pull_request:
 permissions:
   contents: read
-
 jobs:
-  test:
+  python:
     strategy:
       fail-fast: false
       matrix:
@@ -13,31 +14,47 @@ jobs:
         python: ['3.11', '3.13']
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
-      - run: python -m pip install -e ".[mcp,test]"
+      - run: python -m pip install -e ".[dev]"
       - run: python -m unittest discover -s tests -v
-      - run: python -m pip wheel . --no-deps --wheel-dir dist
-
-  experience-cycle:
+      - run: python examples/pack_training.py
+      - run: python -m build
+      - run: python scripts/package_plugin.py
+      - run: python scripts/check_distribution.py
+  native-reader:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
-          path: data
-      - uses: actions/checkout@v4
+          python-version: '3.13'
+      - run: python -m pip install -e .
+      - run: rustup toolchain install stable --profile minimal
+      - run: cargo +stable test --locked --manifest-path rust/Cargo.toml
+      - run: cargo +stable build --release --locked --manifest-path rust/Cargo.toml
+      - run: python rust/compare_python.py
+
+  typescript:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
-          repository: Cherish0925/Verifiable-Agent-Gym
-          ref: ba714c23dce2ff42ba5806dfce1887adfc1e092a
-          path: gym
-      - uses: actions/setup-python@v5
+          python-version: '3.13'
+      - uses: actions/setup-node@v7
         with:
-          python-version: '3.12'
-      - run: python -m pip install -e ./data -e ./gym
-      - run: python data/examples/experience_cycle.py --gym-tasks gym/examples/sql-workload/tasks.jsonl --output experience-cycle
-      - uses: actions/upload-artifact@v4
-        with:
-          name: experience-cycle-result
-          path: experience-cycle/result.json
+          node-version: '24'
+      - run: python -m pip install -e .
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: sdk/typescript
+      - run: npm test
+        working-directory: sdk/typescript
+      - run: npm pack --dry-run
+        working-directory: sdk/typescript

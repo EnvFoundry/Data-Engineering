@@ -1,25 +1,28 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-data-engineering"
-version = "0.2.0"
+version = "0.3.0"
 description = "A research and engineering environment for the AI data lifecycle"
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{name = "Shuxing Yang"}]
 dependencies = []
 
 [project.optional-dependencies]
 mcp = ["mcp>=1.29,<2"]
 test = ["jsonschema>=4,<5"]
+dev = ["build>=1", "mcp>=1.29,<2", "jsonschema>=4,<5"]
 
 [project.scripts]
 ai-data = "ai_data.cli:main"
 
 [project.urls]
-Repository = "https://github.com/Cherish0925/Data-Engineering"
+Repository = "https://github.com/EnvFoundry/Data-Engineering"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -55,6 +55,11 @@ class MCPTests(unittest.IsolatedAsyncioTestCase):
             root = Path(directory)
             for name in ("records.jsonl", "local.recipe.json"):
                 shutil.copyfile(EXAMPLES / name, root / name)
+            records_path = root / "records.jsonl"
+            rows = [json.loads(line) for line in records_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            for row in rows:
+                row["payload"].update(input_ids=[1, 3, 2], loss_mask=[0, 0, 1])
+            records_path.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
             env = dict(os.environ)
             params = StdioServerParameters(command=sys.executable,
                                            args=["-m", "ai_data", "serve", "--root", str(root)], env=env)
@@ -64,7 +69,17 @@ class MCPTests(unittest.IsolatedAsyncioTestCase):
                         await session.initialize()
                         names = {t.name for t in (await session.list_tools()).tools}
                         self.assertEqual(names, {"data_capabilities", "data_profile", "data_build", "data_inspect", "data_verify",
-                                                 "data_compose", "data_verify_mixture"})
+                                                 "data_compose", "data_verify_mixture", "data_pack", "data_packed", "data_samples"})
+                        resources = {str(resource.uri) for resource in (await session.list_resources()).resources}
+                        self.assertEqual(resources, {"data://guides/data-design", "data://guides/mixture-design",
+                                                     "data://guides/causal-packing", "data://guides/consumption-restart"})
+                        prompts = {prompt.name for prompt in (await session.list_prompts()).prompts}
+                        self.assertEqual(prompts, {"design_data_product", "prepare_training_data", "compare_data_recipes"})
+                        guide = await session.read_resource("data://guides/causal-packing")
+                        self.assertIn("target_ids", guide.contents[0].text)
+                        prompt = await session.get_prompt("prepare_training_data", {
+                            "mixture": "mixture", "encoding": "authored fixture", "objective": "assistant response tokens"})
+                        self.assertTrue(prompt.messages)
                         result = await session.call_tool("data_build", {"recipe": "local.recipe.json", "output": "release"})
                         self.assertFalse(result.isError, result.content)
                         result = await session.call_tool("data_verify", {"path": "release"})
@@ -81,6 +96,19 @@ class MCPTests(unittest.IsolatedAsyncioTestCase):
                         checked = await session.call_tool("data_verify_mixture", {"path": "mixture"})
                         self.assertFalse(checked.isError, checked.content)
                         self.assertEqual(json.loads(checked.content[0].text)["records"], 12)
+                        packed = await session.call_tool("data_pack", {"mixture": "mixture", "output": "packed",
+                            "sequence_length": 4, "tokenizer_name": "authored-fixture", "tokenizer_revision": "1",
+                            "loss_mask": "/payload/loss_mask"})
+                        self.assertFalse(packed.isError, packed.content)
+                        self.assertEqual(json.loads(packed.content[0].text)["counts"]["trainable_tokens"], 12)
+                        page = await session.call_tool("data_samples", {"path": "packed", "rank": 1,
+                                                                        "world_size": 2, "limit": 1,
+                                                                        "include_payload": True})
+                        self.assertFalse(page.isError, page.content)
+                        block = json.loads(page.content[0].text)["items"][0]
+                        self.assertEqual(block["sample_index"], 1)
+                        self.assertEqual(block["target_ids"], [3, 2, 3, 2])
+                        self.assertEqual(block["loss_mask"], [0, 1, 0, 1])
                         forbidden = await session.call_tool("data_profile", {"path": "../outside.jsonl"})
                         self.assertTrue(forbidden.isError)
                         overwrite = await session.call_tool("data_build", {"recipe": "local.recipe.json", "output": "release"})

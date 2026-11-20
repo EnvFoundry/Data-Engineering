@@ -1,0 +1,25 @@
+name: Optional experience workflow
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  experience-cycle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: data
+      - uses: actions/checkout@v7
+        with:
+          repository: EnvFoundry/Verifiable-Agent-Gym
+          ref: 82b7100d88be2d1158d355802e6a864cde1e5684
+          path: gym
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e ./data -e ./gym
+      - run: python data/examples/experience_cycle.py --gym-tasks gym/examples/sql-workload/tasks.jsonl --output experience-cycle
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experience-cycle-result
+          path: experience-cycle/result.json

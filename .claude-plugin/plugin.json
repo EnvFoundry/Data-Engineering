@@ -1,0 +1,9 @@
+{
+  "name": "data-engineering",
+  "version": "0.3.0",
+  "description": "Source preparation, training mixtures and causal sequence packing.",
+  "author": {"name": "EnvFoundry contributors"},
+  "homepage": "https://github.com/EnvFoundry/Data-Engineering",
+  "repository": "https://github.com/EnvFoundry/Data-Engineering",
+  "license": "MIT"
+}

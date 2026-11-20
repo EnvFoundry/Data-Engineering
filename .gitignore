@@ -7,3 +7,7 @@ dist/
 runs/
 .env
 *.local.json
+
+node_modules/
+*.tgz
+target/

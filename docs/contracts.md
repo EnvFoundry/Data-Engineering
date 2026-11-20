@@ -1,6 +1,6 @@
 # Data contracts
 
-The v0.2 implementation uses record and source-recipe schema `1.0`. The common envelope preserves domain payloads and their origin. [Composition](consumption.md) adds a separate mixture recipe, indexed shard manifest and consumer state.
+The v0.3 implementation uses record and source-recipe schema `1.0`. The common envelope preserves domain payloads and their origin. [Composition](consumption.md) adds a separate mixture recipe, indexed shard manifest and consumer state.
 
 ## Record
 
@@ -77,3 +77,7 @@ Source bytes stay at their original location. The manifest hashes them but does 
 ## Compatibility
 
 Keep incompatible envelope changes behind a new schema version and a migration. Preserve input IDs in migration lineage. Add domain structure inside a versioned payload profile rather than silently changing existing field meanings. Keep the repository/package version distinct from record schema, external connector version and data release ID.
+
+## Packed sequences
+
+[Sequence packing](packing.md) defines the separate packed-release format, aligned causal targets, loss masks, segment boundaries and consumption cursor. It consumes a mixture without changing the source-record contract.

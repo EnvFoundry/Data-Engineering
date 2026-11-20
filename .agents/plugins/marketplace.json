@@ -1,0 +1,10 @@
+{
+  "name": "data-engineering",
+  "interface": {"displayName": "Data Engineering"},
+  "plugins": [{
+    "name": "data-engineering",
+    "source": {"source": "local", "path": "./"},
+    "policy": {"installation": "AVAILABLE"},
+    "category": "Developer Tools"
+  }]
+}

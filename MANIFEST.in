@@ -1,0 +1,16 @@
+include README.md README.zh-CN.md LICENSE AGENTS.md server.py plugin.json mcp.json mcp.codex.json .mcp.json
+recursive-include docs *.md
+recursive-include examples *.py *.json *.jsonl
+recursive-include scripts *.py
+recursive-include tests *.py
+recursive-include skills *.md
+recursive-include .codex-plugin *.json
+recursive-include .claude-plugin *.json
+recursive-include .agents/plugins *.json
+
+recursive-include sdk/typescript *.ts *.json *.md *.mjs
+prune sdk/typescript/node_modules
+prune sdk/typescript/dist
+recursive-include rust *.rs *.toml *.lock *.py
+prune rust/target
+include sdk/typescript/LICENSE
